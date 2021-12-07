@@ -36,6 +36,7 @@ go run main.go -c UCoSrY_IQQVpmIRZ9Xf-y93g
 
 - `-o dir, --output dir` : json 資料產生的位置
 - `-c channels, --channels channels` : youtube頻道ID 多個頻道以","做分隔
+- `-s {file location}, --source {file location}` : youtube頻道ID檔案，以換行符號分割
 
 
 ### 尚未完成功能

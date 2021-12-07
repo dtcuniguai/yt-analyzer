@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -18,6 +20,7 @@ type (
 	Config struct {
 		channels string
 		output   string
+		source   string
 	}
 )
 
@@ -38,6 +41,10 @@ func main() {
 			Name:  "output,o",
 			Usage: "location for output data saving type:json",
 		},
+		cli.StringFlag{
+			Name:  "source,s",
+			Usage: "channels file read",
+		},
 	}
 
 	app.Run(os.Args)
@@ -47,6 +54,7 @@ func run(c *cli.Context) error {
 	config = Config{
 		channels: c.String("channels"),
 		output:   c.String("output"),
+		source:   c.String("source"),
 	}
 
 	return exec()
@@ -62,11 +70,14 @@ func exec() error {
 
 	//get yt api key
 	ytApiKey := os.Getenv("GOOGLE_API_KEY")
-	channels := strings.Split(config.channels, ",")
+	channels, err := readChannels(config)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	infos := make(map[string]youtube.ChannelInfo)
 
-	for _, channel := range channels {
+	for _, channel := range *channels {
 		// get yt data
 		subDetail, err := youtube.GetSubscriptionsDetail(ytApiKey, channel)
 		if err != nil {
@@ -97,6 +108,31 @@ func exec() error {
 	return nil
 }
 
+func readChannels(config Config) (*[]string, error) {
+
+	if len(config.channels) != 0 {
+		channels := strings.Split(config.channels, ",")
+		return &channels, nil
+	} else if len(config.source) != 0 {
+		file, err := os.Open(config.source)
+		if err != nil {
+			return nil, err
+		}
+		defer file.Close()
+
+		var channels []string
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			channels = append(channels, scanner.Text())
+		}
+
+		return &channels, scanner.Err()
+	} else {
+		return nil, errors.New("missing channel's given")
+	}
+}
+
+//
 func outputData(data map[string]youtube.ChannelInfo, dir string) {
 
 	//default directory
