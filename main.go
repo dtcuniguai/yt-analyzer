@@ -1,10 +1,5 @@
 package main
 
-// https://www.googleapis.com/youtube/v3/channels?part=statistics&id={CHANNEL_ID}&key={YOUR_API_KEY}
-//API KEY AIzaSyDKEkYFAaUWb-abFY9UDjWuYLN-36m896o
-
-// https://www.googleapis.com/youtube/v3/channels?part=statistics&id=UC3o2KSr5rbnttYMkUOowEFA&key=AIzaSyDKEkYFAaUWb-abFY9UDjWuYLN-36m896o
-
 import (
 	"encoding/json"
 	"fmt"
