@@ -2,6 +2,7 @@ package youtube
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -31,13 +32,20 @@ func GetChannelDetail(apiKey string, channelId string) (*ChannelRsp, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusForbidden {
+		return nil, errors.New("channel : " + channelId + " doesn't have permission to get infos")
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("channel : " + channelId + " resource not found")
+	}
+
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -75,6 +83,15 @@ func GetSubscriptionsDetail(apiKey string, channelId string) (*SubRsp, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusForbidden {
+		return nil, errors.New("channel : " + channelId + " doesn't have permission to get infos")
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, errors.New("channel : " + channelId + " resource not found")
+	}
+
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatal(err)

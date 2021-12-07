@@ -78,29 +78,44 @@ func exec() error {
 	infos := make(map[string]youtube.ChannelInfo)
 
 	for _, channel := range *channels {
-		// get yt data
-		subDetail, err := youtube.GetSubscriptionsDetail(ytApiKey, channel)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-		chDetail, err := youtube.GetChannelDetail(ytApiKey, channel)
 
-		if err != nil {
-			fmt.Println(err.Error())
-		}
+		var info youtube.ChannelInfo
 
-		infos[subDetail.Items[0].SubscriberSnippet.Title] = youtube.ChannelInfo{
-			ID:              subDetail.Items[0].SubscriberSnippet.ChannelID,
-			Title:           subDetail.Items[0].SubscriberSnippet.Title,
-			Description:     subDetail.Items[0].SubscriberSnippet.Description,
-			SubscriberCount: chDetail.Items[0].Statistics.SubscriberCount,
-			VideoCount:      chDetail.Items[0].Statistics.VideoCount,
-			ViewCount:       chDetail.Items[0].Statistics.ViewCount,
-			Thumbnails: map[string]string{
+		// 訂閱資料
+		subDetail, subErr := youtube.GetSubscriptionsDetail(ytApiKey, channel)
+		if subErr != nil {
+			fmt.Println(subErr.Error())
+		} else {
+			info.ID = subDetail.Items[0].SubscriberSnippet.ChannelID
+			info.Title = subDetail.Items[0].SubscriberSnippet.Title
+			info.Description = subDetail.Items[0].SubscriberSnippet.Description
+			info.Thumbnails = map[string]string{
 				"default": subDetail.Items[0].SubscriberSnippet.Thumbnails.Default.URL,
 				"medium":  subDetail.Items[0].SubscriberSnippet.Thumbnails.Medium.URL,
 				"high":    subDetail.Items[0].SubscriberSnippet.Thumbnails.High.URL,
-			},
+			}
+		}
+
+		//頻道內容
+		chDetail, chErr := youtube.GetChannelDetail(ytApiKey, channel)
+		if chErr != nil {
+			fmt.Println(chErr.Error())
+		} else {
+			info.SubscriberCount = chDetail.Items[0].Statistics.SubscriberCount
+			info.VideoCount = chDetail.Items[0].Statistics.VideoCount
+			info.ViewCount = chDetail.Items[0].Statistics.ViewCount
+		}
+
+		//channel all info skip
+		if chErr != nil && subErr != nil {
+			fmt.Println("channel : " + channel + " skip")
+			continue
+		}
+
+		if subDetail != nil {
+			infos[subDetail.Items[0].SubscriberSnippet.Title] = info
+		} else {
+			infos[channel] = info
 		}
 	}
 	outputData(infos, config.output)
