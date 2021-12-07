@@ -32,6 +32,11 @@ go run main.go -c UCoSrY_IQQVpmIRZ9Xf-y93g
 
 ![Imgur](https://i.imgur.com/mehk3ub.png)
 
+### command flag
+
+- `-o dir, --output dir` : json 資料產生的位置
+- `-c channels, --channels channels` : youtube頻道ID 多個頻道以","做分隔
+
 
 ### 尚未完成功能
 
