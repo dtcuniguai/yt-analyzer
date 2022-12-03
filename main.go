@@ -7,10 +7,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
 	"time"
-	"you-cli/youtube"
 
+	"ytanalyzer/app/cron"
+	"ytanalyzer/lib/youtube"
+	"ytanalyzer/route"
+
+	"github.com/go-co-op/gocron"
+	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"github.com/urfave/cli"
 )
@@ -27,6 +33,28 @@ type (
 var config Config
 
 func main() {
+
+	godotenv.Load()
+	s := gocron.NewScheduler(time.UTC)
+	s.Every(5).Minutes().Do(cron.TaskSyncYT)
+	s.StartAsync()
+
+	app := fiber.New()
+	//shutdown gracefully
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		_ = <-c
+		fmt.Println("app shut down ing...")
+		s.Remove(cron.TaskSyncYT)
+		_ = app.Shutdown()
+	}()
+
+	route.RegisterRoute(app)
+	app.Listen(fmt.Sprintf(":%v", os.Getenv("APP_PORT")))
+}
+
+func cmd() {
 
 	app := cli.NewApp()
 	app.Name = "Youtube-Cli"

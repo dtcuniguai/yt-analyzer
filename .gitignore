@@ -19,3 +19,6 @@ go.work
 
 # ENV variable
 .env
+oauth2.json
+data/*.db
+docker/*
