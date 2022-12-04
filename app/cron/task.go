@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 	"ytanalyzer/lib/analyzer"
 	"ytanalyzer/lib/oauth"
 	"ytanalyzer/lib/youtube"
