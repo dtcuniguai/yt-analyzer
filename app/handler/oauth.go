@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"strconv"
 	"ytanalyzer/lib/analyzer"
 	"ytanalyzer/lib/oauth"
 	"ytanalyzer/lib/youtube"
@@ -37,6 +38,21 @@ func (o Oauth) Redirect(c *fiber.Ctx) error {
 		return c.SendString(err.Error())
 	}
 
+	view, err := strconv.Atoi(chInfo.Items[0].Statistics.ViewCount)
+	if err != nil {
+		return err
+	}
+
+	videoCount, err := strconv.Atoi(chInfo.Items[0].Statistics.VideoCount)
+	if err != nil {
+		return err
+	}
+
+	subscriber, err := strconv.Atoi(chInfo.Items[0].Statistics.SubscriberCount)
+	if err != nil {
+		return err
+	}
+
 	//data formatting
 	ytinfo := analyzer.Youtuber{
 		ID:           chInfo.Items[0].ID,
@@ -48,6 +64,9 @@ func (o Oauth) Redirect(c *fiber.Ctx) error {
 		MThumb:       chInfo.Items[0].Snippet.Thumbnails.Medium.URL,
 		HThumb:       chInfo.Items[0].Snippet.Thumbnails.High.URL,
 		Country:      chInfo.Items[0].Snippet.Country,
+		View:         view,
+		VideoCount:   videoCount,
+		Subscriber:   subscriber,
 		Token:        account.AccessToken,
 		RefreshToken: account.RefreshToken,
 	}

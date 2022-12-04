@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS youtuber (
 	`country` TEXT NOT NULL,
 	`token` TEXT NOT NULL,
 	`refresh_token` TEXT NOT NULL,	
+	'view' INTEGER NOT NULL,
+	'subscriber' INTEGER NOT NULL,
+	'video_count' INTEGER NOT NULL,
 	`publish_at` INTEGER NOT NULL,
 	`create_at` INTEGER NOT NULL,
 	`update_at` INTEGER NOT NULL

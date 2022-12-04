@@ -11,7 +11,7 @@ import (
 const QUERY_PERPAGE = 30
 
 /* 新增youtuber資料
- * table: sqlite.youtube
+ * table: sqlite.youtuber
  * param: Youtuber (obj)
  */
 func CreateYoutuber(ytber *Youtuber) error {
@@ -34,12 +34,37 @@ func CreateYoutuber(ytber *Youtuber) error {
 		"token":         ytber.Token,
 		"refresh_token": ytber.RefreshToken,
 		"publish_at":    ytber.PublishedAt,
+		"view":          ytber.View,
+		"subscriber":    ytber.Subscriber,
+		"video_count":   ytber.VideoCount,
 		"create_at":     n,
 		"update_at":     n,
 	}
 
-	query := "INSERT INTO youtuber (`id`,`title`,`description`,`custom_url`,`default_thumb`,`medium_thumb`,`high_thumb`,`country`,`token`,`refresh_token`,`publish_at`,`create_at`,`update_at`) VALUES (:id,:title,:description,:custom_url,:default_thumb,:medium_thumb,:high_thumb,:country,:token,:refresh_token,:publish_at,:create_at,:update_at)"
+	query := "INSERT INTO youtuber (`id`,`title`,`description`,`custom_url`,`default_thumb`,`medium_thumb`,`high_thumb`,`country`,`token`, `view`, `subscriber`, `video_count`,`refresh_token`,`publish_at`,`create_at`,`update_at`) VALUES (:id,:title,:description,:custom_url,:default_thumb,:medium_thumb,:high_thumb,:country,:token, :view, :subscriber, :video_count,:refresh_token,:publish_at,:create_at,:update_at)"
 	_, err = db.NamedExec(query, dataMap)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+/* 更新youtuber資料
+ * table: sqlite.youtuber
+ * param: vid、updateField(當前數據更新)
+ */
+func UpdateYtber(id string, updateField map[string]interface{}) error {
+
+	db, err := GetDB()
+	if err != nil {
+		return err
+	}
+
+	updateField["id"] = id
+	updateField["update_at"] = time.Now().Unix()
+	query := "UPDATE `youtuber` SET  view=:view, subscriber=:subscriber, video_count=:video_count, update_at=:update_at WHERE id = :id"
+	_, err = db.NamedExec(query, updateField)
 	if err != nil {
 		return err
 	}

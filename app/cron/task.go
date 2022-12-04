@@ -49,7 +49,6 @@ func SyncYTbers() error {
 
 			err = LogYTberVideo(ytb)
 			if err != nil {
-				panic(err)
 				return err
 			}
 		}
@@ -71,14 +70,46 @@ func LogYTberChannel(ytb *analyzer.Youtuber) error {
 
 	chInfo, err := youtube.FetchSelfChannelDetail(ytb.Token)
 	if err != nil {
+		fmt.Println(1)
 		return err
 	}
 
+	view, err := strconv.Atoi(chInfo.Items[0].Statistics.ViewCount)
+	if err != nil {
+		fmt.Println(2)
+		return err
+	}
+
+	subscriber, err := strconv.Atoi(chInfo.Items[0].Statistics.SubscriberCount)
+	if err != nil {
+		fmt.Println(3)
+		return err
+	}
+
+	videoCount, err := strconv.Atoi(chInfo.Items[0].Statistics.VideoCount)
+	if err != nil {
+		fmt.Println(4)
+		return err
+	}
+
+	//update youtuber databse
+	statistics := map[string]interface{}{
+		"view":        view,
+		"subscriber":  subscriber,
+		"video_count": videoCount,
+	}
+	err = analyzer.UpdateYtber(chInfo.Items[0].ID, statistics)
+	if err != nil {
+		fmt.Println(5)
+		return err
+	}
+
+	//create log
 	measurement := "channel"
 	fieldData := map[string]interface{}{
-		"view_count":  chInfo.Items[0].Statistics.ViewCount,
-		"subscriber":  chInfo.Items[0].Statistics.SubscriberCount,
-		"video_count": chInfo.Items[0].Statistics.VideoCount,
+		"view_count":  view,
+		"subscriber":  subscriber,
+		"video_count": videoCount,
 	}
 
 	tagData := map[string]string{
@@ -88,8 +119,10 @@ func LogYTberChannel(ytb *analyzer.Youtuber) error {
 	fmt.Printf("create channel log: %v\n", ytb.ID)
 	err = analyzer.CreateLog(measurement, tagData, fieldData)
 	if err != nil {
+		fmt.Println(6)
 		return err
 	}
+
 	return nil
 }
 
@@ -152,28 +185,29 @@ func LogYTberVideo(ytb *analyzer.Youtuber) error {
 				}
 			}
 
+			view, err := strconv.Atoi(video.Statistics.ViewCount)
+			if err != nil {
+				return err
+			}
+
+			like, err := strconv.Atoi(video.Statistics.LikeCount)
+			if err != nil {
+				return err
+			}
+
+			dislike, err := strconv.Atoi(video.Statistics.DislikeCount)
+			if err != nil {
+				return err
+			}
+
+			comment, err := strconv.Atoi(video.Statistics.CommentCount)
+			if err != nil {
+				return err
+			}
+
 			//資料庫更新、新增
 			if exist {
 				//更新db
-				view, err := strconv.Atoi(video.Statistics.ViewCount)
-				if err != nil {
-					return err
-				}
-
-				like, err := strconv.Atoi(video.Statistics.LikeCount)
-				if err != nil {
-					return err
-				}
-
-				dislike, err := strconv.Atoi(video.Statistics.DislikeCount)
-				if err != nil {
-					return err
-				}
-
-				comment, err := strconv.Atoi(video.Statistics.CommentCount)
-				if err != nil {
-					return err
-				}
 
 				statistics := map[string]interface{}{
 					"view":    view,
@@ -187,30 +221,10 @@ func LogYTberVideo(ytb *analyzer.Youtuber) error {
 					return err
 				}
 				fmt.Printf("影片[%v]更新完成\n", video.ID)
-
 			} else {
 
 				vTags := strings.Join(video.Snippet.Tags, ",")
 				caption, err := strconv.ParseBool(video.ContentDetails.Caption)
-				if err != nil {
-					return err
-				}
-				view, err := strconv.Atoi(video.Statistics.ViewCount)
-				if err != nil {
-					return err
-				}
-
-				like, err := strconv.Atoi(video.Statistics.LikeCount)
-				if err != nil {
-					return err
-				}
-
-				dislike, err := strconv.Atoi(video.Statistics.DislikeCount)
-				if err != nil {
-					return err
-				}
-
-				comment, err := strconv.Atoi(video.Statistics.CommentCount)
 				if err != nil {
 					return err
 				}
@@ -248,10 +262,10 @@ func LogYTberVideo(ytb *analyzer.Youtuber) error {
 
 			measurement := "video"
 			fieldData := map[string]interface{}{
-				"view":    video.Statistics.ViewCount,
-				"like":    video.Statistics.LikeCount,
-				"dislike": video.Statistics.DislikeCount,
-				"comment": video.Statistics.CommentCount,
+				"view":    view,
+				"like":    like,
+				"dislike": dislike,
+				"comment": comment,
 			}
 
 			tagData := map[string]string{

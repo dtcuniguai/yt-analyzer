@@ -11,6 +11,9 @@ type Youtuber struct {
 	Country      string `db:"country"`
 	Token        string `db:"token"`
 	RefreshToken string `db:"refresh_token"`
+	View         int    `db:"view"`
+	Subscriber   int    `db:"subscriber"`
+	VideoCount   int    `db:"video_count"`
 	PublishedAt  int64  `db:"publish_at"`
 	CreateAt     int64  `db:"create_at"`
 	UpdateAt     int64  `db:"update_at"`
