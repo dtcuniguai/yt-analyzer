@@ -2,6 +2,8 @@ package cron
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 	"ytanalyzer/lib/analyzer"
 	"ytanalyzer/lib/oauth"
@@ -48,6 +50,7 @@ func SyncYTbers() error {
 
 			err = LogYTberVideo(ytb)
 			if err != nil {
+				panic(err)
 				return err
 			}
 		}
@@ -128,11 +131,122 @@ func LogYTberVideo(ytb *analyzer.Youtuber) error {
 			}
 		}
 
+		//db取得影片資料
+		vData, err := analyzer.GetVideosByIDs(vIDs)
+		if err != nil {
+			return err
+		}
+
+		//youtube api 取得影片詳細資料
 		vRsp, err := youtube.FetchVideoDetail(ytb.Token, vIDs)
 		if err != nil {
 			return err
 		}
 		for _, video := range vRsp.Items {
+
+			//TODO:for迴圈比對yt api影片是否已在db中、可能有更有效率的解法找出是否已存在db
+			var exist bool
+			for _, v := range vData {
+				if v.ID == video.ID {
+					exist = true
+					break
+				}
+			}
+
+			//資料庫更新、新增
+			if exist {
+				//更新db
+				view, err := strconv.Atoi(video.Statistics.ViewCount)
+				if err != nil {
+					return err
+				}
+
+				like, err := strconv.Atoi(video.Statistics.LikeCount)
+				if err != nil {
+					return err
+				}
+
+				dislike, err := strconv.Atoi(video.Statistics.DislikeCount)
+				if err != nil {
+					return err
+				}
+
+				comment, err := strconv.Atoi(video.Statistics.CommentCount)
+				if err != nil {
+					return err
+				}
+
+				statistics := map[string]interface{}{
+					"view":    view,
+					"like":    like,
+					"dislike": dislike,
+					"comment": comment,
+				}
+
+				err = analyzer.UpdateVideo(video.ID, statistics)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("影片[%v]更新完成\n", video.ID)
+
+			} else {
+
+				vTags := strings.Join(video.Snippet.Tags, ",")
+				caption, err := strconv.ParseBool(video.ContentDetails.Caption)
+				if err != nil {
+					return err
+				}
+				view, err := strconv.Atoi(video.Statistics.ViewCount)
+				if err != nil {
+					return err
+				}
+
+				like, err := strconv.Atoi(video.Statistics.LikeCount)
+				if err != nil {
+					return err
+				}
+
+				dislike, err := strconv.Atoi(video.Statistics.DislikeCount)
+				if err != nil {
+					return err
+				}
+
+				comment, err := strconv.Atoi(video.Statistics.CommentCount)
+				if err != nil {
+					return err
+				}
+
+				//新增db
+				vinfo := analyzer.Video{
+					ID:           video.ID,
+					ChannelID:    ytb.ID,
+					Title:        video.Snippet.Title,
+					Description:  video.Snippet.Description,
+					DefaultThumb: video.Snippet.Thumbnails.Default.URL,
+					MThumb:       video.Snippet.Thumbnails.Medium.URL,
+					HThumb:       video.Snippet.Thumbnails.High.URL,
+					SThumb:       video.Snippet.Thumbnails.Standard.URL,
+					MaxThumb:     video.Snippet.Thumbnails.Maxres.URL,
+					Tags:         vTags,
+					Language:     video.Snippet.DefaultLanguage,
+					Duration:     video.ContentDetails.Duration,
+					Dimension:    video.ContentDetails.Dimension,
+					Definition:   video.ContentDetails.Definition,
+					Caption:      caption,
+					View:         view,
+					Like:         like,
+					Dislike:      dislike,
+					Comment:      comment,
+					PublishAt:    video.Snippet.PublishedAt.Unix(),
+				}
+
+				err = analyzer.CreateVideo(&vinfo)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("影片[%v]新增完成\n", video.ID)
+			}
+
 			measurement := "video"
 			fieldData := map[string]interface{}{
 				"view":    video.Statistics.ViewCount,
@@ -164,8 +278,7 @@ func LogYTberVideo(ytb *analyzer.Youtuber) error {
 		if protect > 1000000 {
 			break
 		}
-		time.Sleep(3 * time.Second)
-
+		// time.Sleep(1 * time.Second)
 	}
 
 	return nil

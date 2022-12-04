@@ -32,7 +32,6 @@ func (o Oauth) Redirect(c *fiber.Ctx) error {
 		return c.SendString(err.Error())
 	}
 
-	//save user to db
 	chInfo, err := youtube.FetchSelfChannelDetail(account.AccessToken)
 	if err != nil {
 		return c.SendString(err.Error())
@@ -53,12 +52,31 @@ func (o Oauth) Redirect(c *fiber.Ctx) error {
 		RefreshToken: account.RefreshToken,
 	}
 
-	err = analyzer.RegisterYoutuber(ytinfo)
+	//save user to db
+	err = analyzer.CreateYoutuber(&ytinfo)
 	if err != nil {
 		return c.SendString(err.Error())
 	}
-
 	fmt.Printf("頻道[%v] 新增成功ID: %v\n", ytinfo.Title, ytinfo.ID)
+
+	//create user log
+	measurement := "channel"
+	fieldData := map[string]interface{}{
+		"view_count":  chInfo.Items[0].Statistics.ViewCount,
+		"subscriber":  chInfo.Items[0].Statistics.SubscriberCount,
+		"video_count": chInfo.Items[0].Statistics.VideoCount,
+	}
+
+	tagData := map[string]string{
+		"channel_id": chInfo.Items[0].ID,
+	}
+
+	fmt.Printf("create channel log: %v\n", ytinfo.ID)
+	err = analyzer.CreateLog(measurement, tagData, fieldData)
+	if err != nil {
+		return err
+	}
+
 	msg := fmt.Sprintf("授權成功，您好 %v", ytinfo.Title)
 	return c.SendString(msg)
 }
