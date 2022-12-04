@@ -20,7 +20,7 @@ app.build:
 	go build -o $(PWD)/$(shell basename $(CURDIR))
 
 app.dev:
-	go run main.go
+	go run $(PWD)/$(shell basename $(CURDIR))
 
 
 
