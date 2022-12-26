@@ -230,3 +230,9 @@ type VideoRsp struct {
 		ResultsPerPage int `json:"resultsPerPage"`
 	} `json:"pageInfo"`
 }
+
+type AnalyzeHeader struct {
+	Name       string `json:"name"`
+	ColumnType string `json:"columnType"`
+	DataType   string `json:"dataType"`
+}

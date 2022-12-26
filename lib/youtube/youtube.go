@@ -3,6 +3,7 @@ package youtube
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -230,4 +231,50 @@ func FetchVideoDetail(token string, id string) (*VideoRsp, error) {
 	}
 
 	return &list, nil
+}
+
+/* 影片詳細資料
+ *
+ */
+func FetchTYAnalytics(token string, qMap map[string]string) ([]AnalyzeHeader, [][]interface{}, error) {
+
+	client := &http.Client{}
+	url := "https://youtubeanalytics.googleapis.com/v2/reports"
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	q := req.URL.Query()
+	q.Add("access_token", token)
+	for k, v := range qMap {
+		q.Add(k, v)
+	}
+
+	req.URL.RawQuery = q.Encode()
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	rsp := &struct {
+		Kind          string          `json:"kind"`
+		ColumnHeaders []AnalyzeHeader `json:"columnHeaders"`
+		Rows          [][]interface{} `json:"rows"`
+	}{}
+
+	err = json.Unmarshal([]byte(data), &rsp)
+	if err != nil {
+		return nil, nil, err
+	}
+	fmt.Println(string(data))
+
+	return rsp.ColumnHeaders, rsp.Rows, nil
 }

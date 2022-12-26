@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 	"ytanalyzer/lib/analyzer"
 	"ytanalyzer/lib/oauth"
 	"ytanalyzer/lib/youtube"
@@ -100,16 +101,38 @@ func LogYTberChannel(ytb *analyzer.Youtuber) error {
 	}
 	err = analyzer.UpdateYtber(chInfo.Items[0].ID, statistics)
 	if err != nil {
-		fmt.Println(5)
 		return err
 	}
 
 	//create log
+	start := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+	end := time.Now().Format("2006-01-02")
+	mcs := "views,redViews,comments,likes,dislikes,videosAddedToPlaylists,videosRemovedFromPlaylists,shares,estimatedMinutesWatched,estimatedRedMinutesWatched,averageViewDuration,averageViewPercentage,annotationClickThroughRate,annotationCloseRate,annotationImpressions,annotationClickableImpressions,annotationClosableImpressions,annotationClicks,annotationCloses,cardClickRate,cardTeaserClickRate,cardImpressions,cardTeaserImpressions,cardClicks,cardTeaserClicks,subscribersGained,subscribersLost,estimatedRevenue,estimatedAdRevenue,grossRevenue,estimatedRedPartnerRevenue,monetizedPlaybacks,playbackBasedCpm,adImpressions,cpm"
+	qMap := map[string]string{
+		"ids":       "channel==MINE",
+		"metrics":   mcs,
+		"startDate": start,
+		"endDate":   end,
+	}
+
+	metrics, rows, err := youtube.FetchTYAnalytics(ytb.Token, qMap)
+	if err != nil {
+		return err
+	}
+
 	measurement := "channel"
-	fieldData := map[string]interface{}{
-		"view_count":  view,
-		"subscriber":  subscriber,
-		"video_count": videoCount,
+	fieldData := make(map[string]interface{})
+	//make metrics
+	if len(rows) == 0 {
+		//所有統計資料為0
+		headers := strings.Split(mcs, ",")
+		for _, h := range headers {
+			fieldData[h] = 0
+		}
+	} else {
+		for i, header := range metrics {
+			fieldData[header.Name] = rows[0][i]
+		}
 	}
 
 	tagData := map[string]string{
@@ -119,7 +142,6 @@ func LogYTberChannel(ytb *analyzer.Youtuber) error {
 	fmt.Printf("create channel log: %v\n", ytb.ID)
 	err = analyzer.CreateLog(measurement, tagData, fieldData)
 	if err != nil {
-		fmt.Println(6)
 		return err
 	}
 
@@ -260,19 +282,51 @@ func LogYTberVideo(ytb *analyzer.Youtuber) error {
 				fmt.Printf("影片[%v]新增完成\n", video.ID)
 			}
 
+			//create log
+			filters := fmt.Sprintf("video==%v", video.ID)
+			start := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+			end := time.Now().Format("2006-01-02")
+			mcs := "views,redViews,comments,likes,dislikes,videosAddedToPlaylists,videosRemovedFromPlaylists,shares,estimatedMinutesWatched,estimatedRedMinutesWatched,averageViewDuration,averageViewPercentage,annotationClickThroughRate,annotationCloseRate,annotationImpressions,annotationClickableImpressions,annotationClosableImpressions,annotationClicks,annotationCloses,cardClickRate,cardTeaserClickRate,cardImpressions,cardTeaserImpressions,cardClicks,cardTeaserClicks,subscribersGained,subscribersLost,estimatedRevenue,estimatedAdRevenue,grossRevenue,estimatedRedPartnerRevenue,monetizedPlaybacks,playbackBasedCpm,adImpressions,cpm"
+			qMap := map[string]string{
+				"dimensions": "video",
+				"ids":        "channel==MINE",
+				"metrics":    mcs,
+				"filters":    filters,
+				"startDate":  start,
+				"endDate":    end,
+			}
+
+			metrics, rows, err := youtube.FetchTYAnalytics(ytb.Token, qMap)
+			if err != nil {
+				return err
+			}
+
 			measurement := "video"
-			fieldData := map[string]interface{}{
-				"view":    view,
-				"like":    like,
-				"dislike": dislike,
-				"comment": comment,
+			tagData := make(map[string]string)
+			fieldData := make(map[string]interface{})
+
+			//make metrics
+			if len(rows) == 0 {
+				//所有統計資料為0
+				tagData["video"] = video.ID
+				headers := strings.Split(mcs, ",")
+				for _, h := range headers {
+					fieldData[h] = 0
+				}
+
+			} else {
+				for i, header := range metrics {
+					if header.DataType == "DIMENSION" {
+						tag := fmt.Sprintf("%v", rows[0][i])
+						tagData[header.Name] = tag
+					} else {
+						fieldData[header.Name] = rows[0][i]
+					}
+				}
 			}
 
-			tagData := map[string]string{
-				"id":         video.ID,
-				"channel_id": ytb.ID,
-			}
-
+			//tag channel
+			tagData["channel"] = ytb.ID
 			fmt.Printf("create video log: %v\n", video.ID)
 			err = analyzer.CreateLog(measurement, tagData, fieldData)
 			if err != nil {

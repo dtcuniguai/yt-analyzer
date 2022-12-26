@@ -28,6 +28,8 @@ func Config() *oauth2.Config {
 				"https://www.googleapis.com/auth/userinfo.email",
 				"https://www.googleapis.com/auth/userinfo.profile",
 				"https://www.googleapis.com/auth/youtube.readonly",
+				"https://www.googleapis.com/auth/yt-analytics.readonly",
+				"https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
 			},
 			Endpoint: google.Endpoint,
 		}
