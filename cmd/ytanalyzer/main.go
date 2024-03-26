@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"ytanalyzer/app/cron"
-	"ytanalyzer/lib/youtube"
-	"ytanalyzer/route"
+	"ytanalyzer/internal/cron"
+	"ytanalyzer/internal/youtube"
+	"ytanalyzer/pkg/routes"
 
 	"github.com/go-co-op/gocron"
 	"github.com/gofiber/fiber/v2"
@@ -175,7 +175,6 @@ func readChannels(config Config) (*[]string, error) {
 	}
 }
 
-//
 func outputData(data map[string]youtube.ChannelInfo, dir string) {
 
 	//default directory
