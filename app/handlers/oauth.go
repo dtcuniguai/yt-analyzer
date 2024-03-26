@@ -1,11 +1,11 @@
-package handler
+package handlers
 
 import (
 	"fmt"
 	"strconv"
-	"ytanalyzer/lib/analyzer"
-	"ytanalyzer/lib/oauth"
-	"ytanalyzer/lib/youtube"
+	"ytanalyzer/internal/analyzer"
+	"ytanalyzer/internal/oauth"
+	"ytanalyzer/internal/youtube"
 
 	"github.com/gofiber/fiber/v2"
 )

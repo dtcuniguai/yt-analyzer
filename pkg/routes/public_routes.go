@@ -1,7 +1,7 @@
 package route
 
 import (
-	"ytanalyzer/app/handler"
+	"ytanalyzer/app/handlers"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,7 +12,7 @@ func RegisterRoute(app *fiber.App) {
 	// app.Use(middleware.AccessLog)
 
 	//handler init
-	var oauth handler.Oauth
+	var oauth handlers.Oauth
 
 	//oauth api
 	app.Get("oauth/access", oauth.Auth)

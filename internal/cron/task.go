@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"ytanalyzer/lib/analyzer"
-	"ytanalyzer/lib/oauth"
-	"ytanalyzer/lib/youtube"
+	"ytanalyzer/internal/analyzer"
+	"ytanalyzer/internal/oauth"
+	"ytanalyzer/internal/youtube"
 )
 
 /* youtube排程紀錄資料
